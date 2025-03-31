@@ -1,0 +1,31 @@
+{
+  "name": "network-server",
+  "version": "1.0.0",
+  "description": "Project network-server is a CRM platform backend codebase that lets organizations manage their people, projects, finances and other important details.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/advaithsuryaP/network-server.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/advaithsuryaP/network-server/issues"
+  },
+  "homepage": "https://github.com/advaithsuryaP/network-server#readme",
+  "dependencies": {
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "nodemon": "^3.1.9",
+    "pg": "^8.14.1",
+    "sequelize": "^6.37.7"
+  }
+}
