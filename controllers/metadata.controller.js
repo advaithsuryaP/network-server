@@ -1648,3 +1648,10 @@ export const getCountries = (req, res) => {
   ];
   return res.status(200).json(countries);
 };
+
+export const getCategories = (req, res) => {
+  return res.status(200).json([
+    { id: "startup", label: "Start up" },
+    { id: "enterprise", label: "Enterprise" },
+  ]);
+};
