@@ -1,7 +1,7 @@
 const express = require('express');
-const router = express.Router();
-
 const contactController = require('../controllers/contact.controller');
+
+const router = express.Router();
 
 // Get all contacts with company details
 router.get('/', contactController.getContacts);
