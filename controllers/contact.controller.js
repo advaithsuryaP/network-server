@@ -15,6 +15,7 @@ const createContact = async (req, res) => {
                 name: 'New Company',
                 description: 'Default company for new contact',
                 category: 'startup',
+                background: 'assets/images/background/umbc-3.jpg',
                 primaryIndustry: 'Technology',
                 attractedOutOfState: false,
                 confidentialityRequested: false,
