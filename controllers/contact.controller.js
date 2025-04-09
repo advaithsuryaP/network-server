@@ -73,7 +73,7 @@ const getContacts = async (req, res) => {
                 }
             ]
         });
-        res.json(contacts);
+        res.status(200).json(contacts);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -92,7 +92,7 @@ const getContactById = async (req, res) => {
         if (!contact) {
             return res.status(404).json({ error: 'Contact not found' });
         }
-        res.json(contact);
+        res.status(200).json(contact);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -152,7 +152,7 @@ const updateContact = async (req, res) => {
         // Commit transaction
         await transaction.commit();
 
-        res.json(updatedContact);
+        res.status(200).json(updatedContact);
     } catch (error) {
         // Rollback transaction on error
         if (transaction) {
@@ -168,9 +168,23 @@ const deleteContact = async (req, res) => {
         // Start transaction
         transaction = await sequelize.transaction();
 
-        const contact = await Contact.findByPk(req.params.id, { transaction });
+        const contact = await Contact.findByPk(req.params.id, {
+            include: [
+                {
+                    model: Company,
+                    as: 'company'
+                }
+            ],
+            transaction
+        });
+
         if (!contact) {
             return res.status(404).json({ error: 'Contact not found' });
+        }
+
+        // Delete the associated company if it exists
+        if (contact.company) {
+            await contact.company.destroy({ transaction });
         }
 
         // Delete contact
@@ -179,7 +193,7 @@ const deleteContact = async (req, res) => {
         // Commit transaction
         await transaction.commit();
 
-        res.json({ success: true });
+        res.status(200).json({ success: true });
     } catch (error) {
         // Rollback transaction on error
         if (transaction) {
@@ -203,7 +217,7 @@ const searchContacts = async (req, res) => {
                     }
                 ]
             });
-            return res.json(contacts);
+            return res.status(200).json(contacts);
         }
 
         const contacts = await Contact.findAll({
@@ -229,7 +243,7 @@ const searchContacts = async (req, res) => {
             ]
         });
 
-        res.json(contacts);
+        res.status(200).json(contacts);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
