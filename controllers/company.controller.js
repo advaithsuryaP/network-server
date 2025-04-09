@@ -1,23 +1,17 @@
 const Company = require('../models/company.model');
 
 const getCompanies = async (req, res) => {
-    const companies = await Company.findAll();
-    res.status(200).json(companies);
-};
-
-const getContacts = async (req, res) => {
-    try {
-        const contacts = await Contact.findAll({
-            include: [
-                {
-                    model: Company,
-                    as: 'company'
-                }
-            ]
+    const category = req.query.category;
+    if (category) {
+        const companies = await Company.findAll({
+            where: {
+                category: category
+            }
         });
-        res.json(contacts);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(200).json(companies);
+    } else {
+        const companies = await Company.findAll();
+        res.status(200).json(companies);
     }
 };
 
