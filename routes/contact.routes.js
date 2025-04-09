@@ -6,6 +6,9 @@ const router = express.Router();
 // Get all contacts with company details
 router.get('/', contactController.getContacts);
 
+// Search contacts
+router.get('/search', contactController.searchContacts);
+
 // Get contact by ID with company details
 router.get('/:id', contactController.getContactById);
 

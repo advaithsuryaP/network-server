@@ -1,49 +1,63 @@
 const sequelize = require('../config/database');
 const Contact = require('../models/contact.model');
 const Company = require('../models/company.model');
+const { Op } = require('sequelize');
 
 const createContact = async (req, res) => {
+    let transaction;
     try {
-        const { company, emails, phoneNumbers, ...contactData } = req.body;
+        // Start transaction
+        transaction = await sequelize.transaction();
 
-        // Start a transaction
-        const result = await sequelize.transaction(async t => {
-            // Create or find company
-            let companyRecord;
-            if (company.id) {
-                companyRecord = await Company.findByPk(company.id);
-                if (!companyRecord) {
-                    throw new Error('Company not found');
-                }
-            } else {
-                companyRecord = await Company.create(company, { transaction: t });
-            }
+        // Create default company
+        const defaultCompany = await Company.create(
+            {
+                name: 'New Company',
+                description: 'Default company for new contact',
+                category: 'startup',
+                primaryIndustry: 'Technology',
+                attractedOutOfState: false,
+                confidentialityRequested: false,
+                intellectualProperty: 'None',
+                departmentIfFaculty: 'N/A'
+            },
+            { transaction }
+        );
 
-            // Create contact with company reference and embedded arrays
-            const contact = await Contact.create(
+        // Create contact with default values
+        const defaultContact = await Contact.create(
+            {
+                firstName: 'New',
+                lastName: 'Contact',
+                title: 'Not Specified',
+                notes: '',
+                companyId: defaultCompany.id,
+                emails: [],
+                phoneNumbers: []
+            },
+            { transaction }
+        );
+
+        // Fetch the created contact with company details
+        const contact = await Contact.findByPk(defaultContact.id, {
+            include: [
                 {
-                    ...contactData,
-                    companyId: companyRecord.id,
-                    emails: emails || [],
-                    phoneNumbers: phoneNumbers || []
-                },
-                { transaction: t }
-            );
-
-            // Return the created contact with company details
-            return await Contact.findByPk(contact.id, {
-                include: [
-                    {
-                        model: Company,
-                        as: 'company'
-                    }
-                ],
-                transaction: t
-            });
+                    model: Company,
+                    as: 'company'
+                }
+            ],
+            transaction
         });
 
-        res.status(201).json(result);
+        // Commit transaction
+        await transaction.commit();
+
+        res.status(201).json(contact);
     } catch (error) {
+        // Rollback transaction on error
+        if (transaction) {
+            await transaction.rollback();
+        }
         res.status(500).json({ error: error.message });
     }
 };
@@ -84,77 +98,137 @@ const getContactById = async (req, res) => {
 };
 
 const updateContact = async (req, res) => {
+    let transaction;
     try {
         const { company, emails, phoneNumbers, ...contactData } = req.body;
 
-        // Start a transaction
-        const result = await sequelize.transaction(async t => {
-            // Find the contact
-            const contact = await Contact.findByPk(req.params.id, {
-                include: [
-                    {
-                        model: Company,
-                        as: 'company'
-                    }
-                ],
-                transaction: t
-            });
+        // Start transaction
+        transaction = await sequelize.transaction();
 
-            if (!contact) {
-                throw new Error('Contact not found');
-            }
-
-            // Update or create company
-            let companyRecord;
-            if (company.id) {
-                companyRecord = await Company.findByPk(company.id);
-                if (!companyRecord) {
-                    throw new Error('Company not found');
-                }
-            } else {
-                companyRecord = await Company.create(company, { transaction: t });
-            }
-
-            // Update contact with embedded arrays
-            await contact.update(
+        // Find the contact
+        const contact = await Contact.findByPk(req.params.id, {
+            include: [
                 {
-                    ...contactData,
-                    companyId: companyRecord.id,
-                    emails: emails || contact.emails,
-                    phoneNumbers: phoneNumbers || contact.phoneNumbers
-                },
-                { transaction: t }
-            );
-
-            // Return the updated contact with company details
-            return await Contact.findByPk(contact.id, {
-                include: [
-                    {
-                        model: Company,
-                        as: 'company'
-                    }
-                ],
-                transaction: t
-            });
+                    model: Company,
+                    as: 'company'
+                }
+            ],
+            transaction
         });
 
-        res.json(result);
+        if (!contact) {
+            return res.status(404).json({ error: 'Contact not found' });
+        }
+
+        if (!contact.company) {
+            return res.status(404).json({ error: 'Associated company not found' });
+        }
+
+        // Update the existing company
+        await contact.company.update(company, { transaction });
+
+        // Update contact
+        await contact.update(
+            {
+                ...contactData,
+                emails: emails || contact.emails,
+                phoneNumbers: phoneNumbers || contact.phoneNumbers
+            },
+            { transaction }
+        );
+
+        // Fetch updated contact with company details
+        const updatedContact = await Contact.findByPk(contact.id, {
+            include: [
+                {
+                    model: Company,
+                    as: 'company'
+                }
+            ],
+            transaction
+        });
+
+        // Commit transaction
+        await transaction.commit();
+
+        res.json(updatedContact);
     } catch (error) {
+        // Rollback transaction on error
+        if (transaction) {
+            await transaction.rollback();
+        }
         res.status(500).json({ error: error.message });
     }
 };
 
 const deleteContact = async (req, res) => {
+    let transaction;
     try {
-        const contact = await Contact.findByPk(req.params.id);
+        // Start transaction
+        transaction = await sequelize.transaction();
+
+        const contact = await Contact.findByPk(req.params.id, { transaction });
         if (!contact) {
             return res.status(404).json({ error: 'Contact not found' });
         }
 
-        // Delete contact (emails and phone numbers will be deleted automatically)
-        await contact.destroy();
+        // Delete contact
+        await contact.destroy({ transaction });
+
+        // Commit transaction
+        await transaction.commit();
 
         res.json({ success: true });
+    } catch (error) {
+        // Rollback transaction on error
+        if (transaction) {
+            await transaction.rollback();
+        }
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const searchContacts = async (req, res) => {
+    try {
+        const { query } = req.query;
+
+        // If no query, return all contacts
+        if (!query || query.trim() === '') {
+            const contacts = await Contact.findAll({
+                include: [
+                    {
+                        model: Company,
+                        as: 'company'
+                    }
+                ]
+            });
+            return res.json(contacts);
+        }
+
+        const contacts = await Contact.findAll({
+            where: {
+                [Op.or]: [
+                    {
+                        firstName: {
+                            [Op.iLike]: `%${query}%`
+                        }
+                    },
+                    {
+                        lastName: {
+                            [Op.iLike]: `%${query}%`
+                        }
+                    }
+                ]
+            },
+            include: [
+                {
+                    model: Company,
+                    as: 'company'
+                }
+            ]
+        });
+
+        res.json(contacts);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -165,5 +239,6 @@ module.exports = {
     getContacts,
     getContactById,
     updateContact,
-    deleteContact
+    deleteContact,
+    searchContacts
 };
