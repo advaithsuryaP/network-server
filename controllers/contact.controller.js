@@ -9,38 +9,44 @@ const createContact = async (req, res) => {
         // Start transaction
         transaction = await sequelize.transaction();
 
-        // Create default company
-        const defaultCompany = await Company.create(
+        let companyId = null;
+
+        // Check if company data is provided in the request
+        if (req.body.company) {
+            // Create company if provided
+            const company = await Company.create(
+                {
+                    name: req.body.company.name || 'New Company',
+                    description: req.body.company.description || 'Default company for new contact',
+                    category: req.body.company.category || 'startup',
+                    background: req.body.company.background || 'assets/images/background/umbc-3.jpg',
+                    primaryIndustry: req.body.company.primaryIndustry || 'Technology',
+                    attractedOutOfState: req.body.company.attractedOutOfState || false,
+                    confidentialityRequested: req.body.company.confidentialityRequested || false,
+                    intellectualProperty: req.body.company.intellectualProperty || 'None',
+                    departmentIfFaculty: req.body.company.departmentIfFaculty || 'N/A'
+                },
+                { transaction }
+            );
+            companyId = company.id;
+        }
+
+        // Create contact with provided data or default values
+        const contact = await Contact.create(
             {
-                name: 'New Company',
-                description: 'Default company for new contact',
-                category: 'startup',
-                background: 'assets/images/background/umbc-3.jpg',
-                primaryIndustry: 'Technology',
-                attractedOutOfState: false,
-                confidentialityRequested: false,
-                intellectualProperty: 'None',
-                departmentIfFaculty: 'N/A'
+                firstName: req.body.firstName || 'New',
+                lastName: req.body.lastName || 'Contact',
+                title: req.body.title || 'Not Specified',
+                notes: req.body.notes || '',
+                companyId: companyId,
+                emails: req.body.emails || [],
+                phoneNumbers: req.body.phoneNumbers || []
             },
             { transaction }
         );
 
-        // Create contact with default values
-        const defaultContact = await Contact.create(
-            {
-                firstName: 'New',
-                lastName: 'Contact',
-                title: 'Not Specified',
-                notes: '',
-                companyId: defaultCompany.id,
-                emails: [],
-                phoneNumbers: []
-            },
-            { transaction }
-        );
-
-        // Fetch the created contact with company details
-        const contact = await Contact.findByPk(defaultContact.id, {
+        // Fetch the created contact with company details if company exists
+        const contactWithCompany = await Contact.findByPk(contact.id, {
             include: [
                 {
                     model: Company,
@@ -53,7 +59,7 @@ const createContact = async (req, res) => {
         // Commit transaction
         await transaction.commit();
 
-        res.status(201).json(contact);
+        res.status(201).json(contactWithCompany);
     } catch (error) {
         // Rollback transaction on error
         if (transaction) {
@@ -121,12 +127,17 @@ const updateContact = async (req, res) => {
             return res.status(404).json({ error: 'Contact not found' });
         }
 
-        if (!contact.company) {
-            return res.status(404).json({ error: 'Associated company not found' });
+        // Handle company update if company data is provided
+        if (company) {
+            if (contact.company) {
+                // Update existing company
+                await contact.company.update(company, { transaction });
+            } else {
+                // Create new company
+                const newCompany = await Company.create(company, { transaction });
+                contactData.companyId = newCompany.id;
+            }
         }
-
-        // Update the existing company
-        await contact.company.update(company, { transaction });
 
         // Update contact
         await contact.update(
@@ -168,27 +179,31 @@ const deleteContact = async (req, res) => {
         // Start transaction
         transaction = await sequelize.transaction();
 
-        const contact = await Contact.findByPk(req.params.id, {
-            include: [
-                {
-                    model: Company,
-                    as: 'company'
-                }
-            ],
-            transaction
-        });
+        // Find the contact without including company to avoid any potential issues
+        const contact = await Contact.findByPk(req.params.id, { transaction });
 
         if (!contact) {
             return res.status(404).json({ error: 'Contact not found' });
         }
 
-        // Delete the associated company if it exists
-        if (contact.company) {
-            await contact.company.destroy({ transaction });
-        }
+        // Get the companyId before deleting the contact
+        const companyId = contact.companyId;
 
-        // Delete contact
+        // Delete the contact first
         await contact.destroy({ transaction });
+
+        // If there was a companyId, try to delete the company
+        if (companyId) {
+            try {
+                const company = await Company.findByPk(companyId, { transaction });
+                if (company) {
+                    await company.destroy({ transaction });
+                }
+            } catch (error) {
+                // If company deletion fails, we still want to commit the contact deletion
+                console.error('Error deleting company:', error);
+            }
+        }
 
         // Commit transaction
         await transaction.commit();
