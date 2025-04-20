@@ -6,47 +6,31 @@ const { Op } = require('sequelize');
 const createContact = async (req, res) => {
     let transaction;
     try {
-        // Start transaction
         transaction = await sequelize.transaction();
 
-        let companyId = null;
-
-        // Check if company data is provided in the request
-        if (req.body.company) {
-            // Create company if provided
-            const company = await Company.create(
-                {
-                    name: req.body.company.name || 'New Company',
-                    description: req.body.company.description || 'Default company for new contact',
-                    category: req.body.company.category || 'startup',
-                    background: req.body.company.background || 'assets/images/background/umbc-3.jpg',
-                    primaryIndustry: req.body.company.primaryIndustry || 'Technology',
-                    attractedOutOfState: req.body.company.attractedOutOfState || false,
-                    confidentialityRequested: req.body.company.confidentialityRequested || false,
-                    intellectualProperty: req.body.company.intellectualProperty || 'None',
-                    departmentIfFaculty: req.body.company.departmentIfFaculty || 'N/A'
-                },
-                { transaction }
-            );
-            companyId = company.id;
-        }
-
-        // Create contact with provided data or default values
-        const contact = await Contact.create(
+        // First create the company
+        const company = await Company.create(
             {
-                firstName: req.body.firstName || 'New',
-                lastName: req.body.lastName || 'Contact',
-                title: req.body.title || 'Not Specified',
-                notes: req.body.notes || '',
-                companyId: companyId,
-                emails: req.body.emails || [],
-                phoneNumbers: req.body.phoneNumbers || []
+                name: req.body.company.name,
+                category: req.body.company.category,
+                primaryIndustry: req.body.company.primaryIndustry
             },
             { transaction }
         );
 
-        // Fetch the created contact with company details if company exists
-        const contactWithCompany = await Contact.findByPk(contact.id, {
+        // Then create the contact with the new companyId
+        const contact = await Contact.create(
+            {
+                firstName: req.body.firstName,
+                lastName: req.body.lastName,
+                title: req.body.title,
+                companyId: company.id
+            },
+            { transaction }
+        );
+
+        // Get the full contact data with associations
+        const fullContact = await Contact.findByPk(contact.id, {
             include: [
                 {
                     model: Company,
@@ -56,12 +40,9 @@ const createContact = async (req, res) => {
             transaction
         });
 
-        // Commit transaction
         await transaction.commit();
-
-        res.status(201).json(contactWithCompany);
+        res.status(201).json(fullContact);
     } catch (error) {
-        // Rollback transaction on error
         if (transaction) {
             await transaction.rollback();
         }
