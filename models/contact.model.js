@@ -47,22 +47,14 @@ const Contact = sequelize.define(
             }
         },
         emails: {
-            type: DataTypes.JSONB,
+            type: DataTypes.ARRAY(DataTypes.STRING),
             allowNull: false,
-            defaultValue: [],
-            get() {
-                const value = this.getDataValue('emails');
-                return value || [];
-            }
+            defaultValue: []
         },
         phoneNumbers: {
-            type: DataTypes.JSONB,
+            type: DataTypes.ARRAY(DataTypes.STRING),
             allowNull: false,
-            defaultValue: [],
-            get() {
-                const value = this.getDataValue('phoneNumbers');
-                return value || [];
-            }
+            defaultValue: []
         }
     },
     {

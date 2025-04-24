@@ -8,26 +8,30 @@ const createContact = async (req, res) => {
     try {
         transaction = await sequelize.transaction();
 
-        // First create the company
-        const company = await Company.create(
-            {
-                name: req.body.company.name,
-                category: req.body.company.category,
-                primaryIndustry: req.body.company.primaryIndustry
-            },
-            { transaction }
-        );
+        const contactData = {
+            firstName: req.body.firstName,
+            lastName: req.body.lastName,
+            title: req.body.title,
+            emails: req.body.emails || [],
+            phoneNumbers: req.body.phoneNumbers || [],
+            notes: req.body.notes || []
+        };
 
-        // Then create the contact with the new companyId
-        const contact = await Contact.create(
-            {
-                firstName: req.body.firstName,
-                lastName: req.body.lastName,
-                title: req.body.title,
-                companyId: company.id
-            },
-            { transaction }
-        );
+        // If company data is provided, create/associate company
+        if (req.body.company) {
+            const company = await Company.create(
+                {
+                    name: req.body.company.name,
+                    category: req.body.company.category,
+                    primaryIndustry: req.body.company.primaryIndustry
+                },
+                { transaction }
+            );
+            contactData.companyId = company.id;
+        }
+
+        // Create the contact
+        const contact = await Contact.create(contactData, { transaction });
 
         // Get the full contact data with associations
         const fullContact = await Contact.findByPk(contact.id, {

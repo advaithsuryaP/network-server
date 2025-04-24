@@ -49,18 +49,6 @@ const Company = sequelize.define(
             type: DataTypes.STRING,
             allowNull: true
         },
-        pointOfContactName: {
-            type: DataTypes.STRING,
-            allowNull: true
-        },
-        pointOfContactEmail: {
-            type: DataTypes.STRING,
-            allowNull: true
-        },
-        pointOfContactPhone: {
-            type: DataTypes.STRING,
-            allowNull: true
-        },
         usmFounders: {
             type: DataTypes.STRING,
             allowNull: true
