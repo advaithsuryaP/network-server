@@ -4,30 +4,51 @@ const Company = require('../models/company.model');
 const { Op } = require('sequelize');
 
 const createContact = async (req, res) => {
-    let transaction;
-    try {
-        transaction = await sequelize.transaction();
+    const { avatar, firstName, lastName, title, emails, major, phoneNumbers, notes, company } = req.body;
 
+    if (!firstName || !lastName) {
+        return res.status(400).json({ error: 'First name and last name are required' });
+    }
+
+    if (!emails || emails.length === 0) {
+        return res.status(400).json({ error: 'At least one email is required' });
+    }
+
+    if (!phoneNumbers || phoneNumbers.length === 0) {
+        return res.status(400).json({ error: 'At least one phone number is required' });
+    }
+
+    const transaction = await sequelize.transaction();
+    try {
         const contactData = {
-            firstName: req.body.firstName,
-            lastName: req.body.lastName,
-            title: req.body.title,
-            emails: req.body.emails || [],
-            phoneNumbers: req.body.phoneNumbers || [],
-            notes: req.body.notes || []
+            avatar: avatar ?? null,
+            firstName: firstName,
+            lastName: lastName,
+            title: title,
+            major: major,
+            emails: emails,
+            phoneNumbers: phoneNumbers,
+            notes: notes
         };
 
-        // If company data is provided, create/associate company
-        if (req.body.company) {
-            const company = await Company.create(
+        if (company) {
+            // If company data is provided, create/associate company
+            const { name, category, primaryIndustry } = company;
+
+            if (!name || !category || !primaryIndustry) {
+                await transaction.rollback();
+                return res.status(400).json({ error: 'Company data is required' });
+            }
+
+            const newCompany = await Company.create(
                 {
-                    name: req.body.company.name,
-                    category: req.body.company.category,
-                    primaryIndustry: req.body.company.primaryIndustry
+                    name: name,
+                    category: category,
+                    primaryIndustry: primaryIndustry
                 },
                 { transaction }
             );
-            contactData.companyId = company.id;
+            contactData.companyId = newCompany.id;
         }
 
         // Create the contact
@@ -47,9 +68,8 @@ const createContact = async (req, res) => {
         await transaction.commit();
         res.status(201).json(fullContact);
     } catch (error) {
-        if (transaction) {
-            await transaction.rollback();
-        }
+        console.log(error);
+        await transaction.rollback();
         res.status(500).json({ error: error.message });
     }
 };
