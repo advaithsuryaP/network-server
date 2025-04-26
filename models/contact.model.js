@@ -26,9 +26,13 @@ const Contact = sequelize.define(
             type: DataTypes.STRING,
             allowNull: false
         },
-        title: {
+        isFromUniversity: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false
+        },
+        school: {
             type: DataTypes.STRING,
-            allowNull: false
+            allowNull: true
         },
         major: {
             type: DataTypes.STRING,
@@ -37,6 +41,10 @@ const Contact = sequelize.define(
         notes: {
             type: DataTypes.TEXT,
             allowNull: true
+        },
+        title: {
+            type: DataTypes.STRING,
+            allowNull: false
         },
         companyId: {
             type: DataTypes.UUID,

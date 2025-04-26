@@ -4,7 +4,19 @@ const Company = require('../models/company.model');
 const { Op } = require('sequelize');
 
 const createContact = async (req, res) => {
-    const { avatar, firstName, lastName, title, emails, major, phoneNumbers, notes, company } = req.body;
+    const {
+        avatar,
+        firstName,
+        lastName,
+        title,
+        emails,
+        major,
+        phoneNumbers,
+        notes,
+        isFromUniversity,
+        school,
+        company
+    } = req.body;
 
     if (!firstName || !lastName) {
         return res.status(400).json({ error: 'First name and last name are required' });
@@ -25,10 +37,12 @@ const createContact = async (req, res) => {
             firstName: firstName,
             lastName: lastName,
             title: title,
-            major: major,
+            major: major ?? null,
+            isFromUniversity: isFromUniversity,
+            school: school ?? null,
             emails: emails,
             phoneNumbers: phoneNumbers,
-            notes: notes
+            notes: notes ?? null
         };
 
         if (company) {
