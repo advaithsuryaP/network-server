@@ -1,7 +1,13 @@
+const fs = require('fs');
+const xlsx = require('xlsx');
+const { Op } = require('sequelize');
 const sequelize = require('../config/database');
+
 const Contact = require('../models/contact.model');
 const Company = require('../models/company.model');
-const { Op } = require('sequelize');
+const Configuration = require('../models/configuration.model');
+
+const { CONFIGURATION_KEYS } = require('../constants/app.keys');
 
 const createContact = async (req, res) => {
     const {
@@ -18,8 +24,8 @@ const createContact = async (req, res) => {
         company
     } = req.body;
 
-    if (!firstName || !lastName) {
-        return res.status(400).json({ error: 'First name and last name are required' });
+    if (!firstName || !lastName || !title) {
+        return res.status(400).json({ error: 'First name, last name and title are required' });
     }
 
     if (!emails || emails.length === 0) {
@@ -283,8 +289,144 @@ const searchContacts = async (req, res) => {
     }
 };
 
+// Bulk create contacts from a CSV file
+const uploadContacts = async (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    try {
+        const workbook = xlsx.readFile(req.file.path);
+        const sheetName = workbook.SheetNames[0];
+        const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+        // Fetch all configuration entries once
+        const configurations = await Configuration.findAll();
+
+        const getConfigId = (category, label) => {
+            const configurationResult = configurations.find(
+                configurationRecord =>
+                    configurationRecord.category === category &&
+                    configurationRecord.label.trim().toLowerCase() === label.trim().toLowerCase()
+            );
+            return configurationResult ? configurationResult.id : null;
+        };
+
+        const parseBoolean = value => value?.toString().toUpperCase() === 'TRUE';
+
+        const defaultLabelId = getConfigId(CONFIGURATION_KEYS.LABELS, 'Personal');
+        if (!defaultLabelId) {
+            throw new Error('Personal label configuration not found.');
+        }
+
+        const createdContacts = [];
+
+        for (const [index, row] of data.entries()) {
+            // Mandatory Fields Validation
+            if (!row['First Name'] || !row['Last Name'] || !row['Title'] || !row['Emails'] || !row['Phone Numbers']) {
+                throw new Error(`Missing mandatory contact fields at row ${index + 2}`);
+            }
+
+            if (!row['Company Name']) {
+                throw new Error(`Missing mandatory company fields at row ${index + 2}`);
+            }
+
+            // Parse Emails
+            const emailsArray = (row['Emails'] || '')
+                .toString()
+                .split(',')
+                .map(email => email.trim())
+                .filter(email => email.length > 0)
+                .map(email => ({ email, label: defaultLabelId }));
+
+            // Parse Phone Numbers
+            const phoneNumbersArray = (row['Phone Numbers'] || '')
+                .toString()
+                .split(',')
+                .map(phone => phone.trim())
+                .filter(phone => phone.length > 0)
+                .map(phoneNumber => ({
+                    phoneNumber,
+                    countryCode: 'us', // hardcoded
+                    label: defaultLabelId
+                }));
+
+            // Fetch UUIDs for dropdown fields
+            const companyCategoryId = getConfigId(CONFIGURATION_KEYS.COMPANY_CATEGORY, row['Company Category']);
+            if (!companyCategoryId) {
+                throw new Error(`Invalid company category at row ${index + 2}: ${row['Company Category']}`);
+            }
+
+            const primaryIndustryId = getConfigId(CONFIGURATION_KEYS.PRIMARY_INDUSTRY, row['Company Primary Industry']);
+            if (!primaryIndustryId) {
+                throw new Error(`Invalid primary industry at row ${index + 2}: ${row['Company Primary Industry']}`);
+            }
+
+            let universityId = null;
+            if (row['University']) {
+                universityId = getConfigId(CONFIGURATION_KEYS.UNIVERSITY, row['University']);
+                if (!universityId) {
+                    throw new Error(`Invalid university at row ${index + 2}: ${row['University']}`);
+                }
+            }
+
+            // Create Company
+            const newCompany = await Company.create({
+                name: row['Company Name'].trim(),
+                description: row['Company Description']?.trim() || null,
+                website: row['Company Website']?.trim() || null,
+                category: companyCategoryId,
+                primaryIndustry: primaryIndustryId,
+                secondaryIndustry: row['Company Secondary Industry']?.trim() || null,
+                attractedOutOfState: parseBoolean(row['Company Attracted Out of State']),
+                confidentialityRequested: parseBoolean(row['Company Confidentiality Requested']),
+                intellectualProperty: row['Company Intellectual Property']?.trim() || null,
+                departmentIfFaculty: row['Company Department if Faculty']?.trim() || null,
+                usmFounders: row['Company USM Founders']?.trim() || null,
+                miscResources: row['Company Misc Resources']?.trim() || null,
+                preCompanyResources: row['Company Pre Company Resources']?.trim() || null,
+                preCompanyFunding: row['Company Pre Company Funding'] || null,
+                icorps: parseBoolean(row['Company Icorps']),
+                tcf: parseBoolean(row['Company Tcf']),
+                tcfAmount: row['Company Tcf Amount'] || null,
+                comments: row['Company Comments']?.trim() || null
+            });
+
+            // Create Contact
+            const newContact = await Contact.create({
+                avatar: null,
+                background: null,
+                firstName: row['First Name'].trim(),
+                lastName: row['Last Name'].trim(),
+                isFromUniversity: parseBoolean(row['From UMBC']),
+                university: universityId,
+                major: row['Major']?.trim() || null,
+                notes: row['Notes']?.trim() || null,
+                title: row['Title'].trim(),
+                companyId: newCompany.id,
+                emails: emailsArray,
+                phoneNumbers: phoneNumbersArray
+            });
+
+            createdContacts.push(newContact);
+        }
+
+        // Clean up the uploaded file
+        fs.unlinkSync(req.file.path);
+
+        return res.status(200).json(createdContacts);
+    } catch (error) {
+        console.error(error);
+        if (req.file && fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path); // ensure cleanup even on error
+        }
+        res.status(500).json({ error: error.message });
+    }
+};
+
 module.exports = {
     createContact,
+    uploadContacts,
     getContacts,
     getContactById,
     updateContact,

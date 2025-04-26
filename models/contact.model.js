@@ -30,7 +30,7 @@ const Contact = sequelize.define(
             type: DataTypes.BOOLEAN,
             defaultValue: false
         },
-        school: {
+        university: {
             type: DataTypes.STRING,
             allowNull: true
         },
