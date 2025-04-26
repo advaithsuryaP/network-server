@@ -66,11 +66,11 @@ const createContact = async (req, res) => {
         });
 
         await transaction.commit();
-        res.status(201).json(fullContact);
+        return res.status(201).json(fullContact);
     } catch (error) {
         console.log(error);
         await transaction.rollback();
-        res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: error.message });
     }
 };
 
@@ -84,9 +84,9 @@ const getContacts = async (req, res) => {
                 }
             ]
         });
-        res.status(200).json(contacts);
+        return res.status(200).json(contacts);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: error.message });
     }
 };
 
@@ -103,9 +103,9 @@ const getContactById = async (req, res) => {
         if (!contact) {
             return res.status(404).json({ error: 'Contact not found' });
         }
-        res.status(200).json(contact);
+        return res.status(200).json(contact);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: error.message });
     }
 };
 
@@ -168,13 +168,13 @@ const updateContact = async (req, res) => {
         // Commit transaction
         await transaction.commit();
 
-        res.status(200).json(updatedContact);
+        return res.status(200).json(updatedContact);
     } catch (error) {
         // Rollback transaction on error
         if (transaction) {
             await transaction.rollback();
         }
-        res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: error.message });
     }
 };
 
@@ -213,13 +213,13 @@ const deleteContact = async (req, res) => {
         // Commit transaction
         await transaction.commit();
 
-        res.status(200).json({ success: true });
+        return res.status(200).json({ success: true });
     } catch (error) {
         // Rollback transaction on error
         if (transaction) {
             await transaction.rollback();
         }
-        res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: error.message });
     }
 };
 
@@ -263,9 +263,9 @@ const searchContacts = async (req, res) => {
             ]
         });
 
-        res.status(200).json(contacts);
+        return res.status(200).json(contacts);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: error.message });
     }
 };
 

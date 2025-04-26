@@ -16,7 +16,7 @@ const getCompanies = async (req, res) => {
                     }
                 ]
             });
-            res.status(200).json(companies);
+            return res.status(200).json(companies);
         } else {
             const companies = await Company.findAll({
                 include: [
@@ -26,10 +26,10 @@ const getCompanies = async (req, res) => {
                     }
                 ]
             });
-            res.status(200).json(companies);
+            return res.status(200).json(companies);
         }
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: error.message });
     }
 };
 
@@ -46,9 +46,9 @@ const getCompanyById = async (req, res) => {
         if (!company) {
             return res.status(404).json({ error: 'Company not found' });
         }
-        res.status(200).json(company);
+        return res.status(200).json(company);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: error.message });
     }
 };
 

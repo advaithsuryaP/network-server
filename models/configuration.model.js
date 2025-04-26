@@ -27,6 +27,10 @@ const Configuration = sequelize.define(
             type: DataTypes.BOOLEAN,
             allowNull: false,
             defaultValue: false
+        },
+        category: {
+            type: DataTypes.STRING,
+            allowNull: false
         }
     },
     {

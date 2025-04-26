@@ -3,37 +3,28 @@ const Configuration = require('../models/configuration.model');
 const { Op } = require('sequelize');
 
 const createConfiguration = async (req, res) => {
-    let transaction;
+    const { category } = req.body;
+    if (!category) {
+        return res.status(400).json({ error: 'Category is required' });
+    }
     try {
-        transaction = await sequelize.transaction();
+        const configuration = await Configuration.create({
+            label: `New Configuration Entry`,
+            description: 'New Description',
+            category: category,
+            is_hidden: false,
+            is_disabled: false
+        });
 
-        // Get total count of configurations
-        const count = await Configuration.count({ transaction });
-        const nextNumber = count + 1;
-
-        const configuration = await Configuration.create(
-            {
-                label: `New Entry ${nextNumber}`,
-                description: 'New Description',
-                is_hidden: false,
-                is_disabled: false
-            },
-            { transaction }
-        );
-
-        await transaction.commit();
         res.status(201).json(configuration);
     } catch (error) {
-        if (transaction) {
-            await transaction.rollback();
-        }
-        res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: error.message });
     }
 };
 
 const getConfigurations = async (req, res) => {
     try {
-        const { include_hidden = false, include_disabled = false } = req.query;
+        const { include_hidden = false, include_disabled = false, category } = req.query;
 
         const where = {};
         if (!include_hidden) {
@@ -42,14 +33,17 @@ const getConfigurations = async (req, res) => {
         if (!include_disabled) {
             where.is_disabled = false;
         }
+        if (category) {
+            where.category = category;
+        }
 
         const configurations = await Configuration.findAll({
             where,
             order: [['createdAt', 'ASC']]
         });
-        res.status(200).json(configurations);
+        return res.status(200).json(configurations);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: error.message });
     }
 };
 
@@ -59,9 +53,9 @@ const getConfigurationById = async (req, res) => {
         if (!configuration) {
             return res.status(404).json({ error: 'Configuration not found' });
         }
-        res.status(200).json(configuration);
+        return res.status(200).json(configuration);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: error.message });
     }
 };
 
@@ -86,12 +80,12 @@ const updateConfiguration = async (req, res) => {
         );
 
         await transaction.commit();
-        res.status(200).json(configuration);
+        return res.status(200).json(configuration);
     } catch (error) {
         if (transaction) {
             await transaction.rollback();
         }
-        res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: error.message });
     }
 };
 
@@ -108,12 +102,12 @@ const deleteConfiguration = async (req, res) => {
         await configuration.destroy({ transaction });
         await transaction.commit();
 
-        res.status(200).json({ success: true });
+        return res.status(200).json({ success: true });
     } catch (error) {
         if (transaction) {
             await transaction.rollback();
         }
-        res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: error.message });
     }
 };
 
@@ -149,9 +143,9 @@ const searchConfigurations = async (req, res) => {
             order: [['createdAt', 'ASC']]
         });
 
-        res.status(200).json(configurations);
+        return res.status(200).json(configurations);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: error.message });
     }
 };
 
