@@ -5,6 +5,12 @@ const CONFIGURATION_KEYS = {
     UNIVERSITY: 'university'
 };
 
+const UPLOAD_STATUS_KEYS = {
+    COMPLETED: 'COMPLETED',
+    PENDING: 'PENDING'
+};
+
 module.exports = {
-    CONFIGURATION_KEYS
+    CONFIGURATION_KEYS,
+    UPLOAD_STATUS_KEYS
 };

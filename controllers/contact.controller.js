@@ -7,7 +7,7 @@ const Contact = require('../models/contact.model');
 const Company = require('../models/company.model');
 const Configuration = require('../models/configuration.model');
 
-const { CONFIGURATION_KEYS } = require('../constants/app.keys');
+const { CONFIGURATION_KEYS, UPLOAD_STATUS_KEYS } = require('../constants/app.keys');
 
 const createContact = async (req, res) => {
     const { avatar, firstName, lastName, title, university, emails, major, phoneNumbers, notes, company } = req.body;
@@ -309,6 +309,11 @@ const uploadContacts = async (req, res) => {
         const createdContacts = [];
 
         for (const [index, row] of data.entries()) {
+            // Skip if upload status is already completed
+            if (row['Upload Status'] === UPLOAD_STATUS_KEYS.COMPLETED) {
+                continue;
+            }
+
             // Mandatory Fields Validation
             if (
                 !row['First Name'] ||
@@ -403,7 +408,11 @@ const uploadContacts = async (req, res) => {
         // Clean up the uploaded file
         fs.unlinkSync(req.file.path);
 
-        return res.status(200).json(createdContacts);
+        if (createdContacts.length === 0) {
+            return res.status(200).json({ message: 'No new contacts created', data: [] });
+        }
+
+        return res.status(200).json({ message: 'Contacts uploaded successfully', data: createdContacts });
     } catch (error) {
         console.error(error);
         if (req.file && fs.existsSync(req.file.path)) {
