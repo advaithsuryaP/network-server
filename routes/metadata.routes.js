@@ -1,9 +1,8 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
 
-const metadataController = require("../controllers/metadata.controller");
+const metadataController = require('../controllers/metadata.controller');
 
-router.get("/countries", metadataController.getCountries);
-router.get("/categories", metadataController.getCategories);
+router.get('/countries', metadataController.getCountries);
 
 module.exports = router;

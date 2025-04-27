@@ -1,4 +1,4 @@
-export const getCountries = (req, res) => {
+const getCountries = (req, res) => {
     const countries = [
         {
             id: '19430ee3-b0fe-4987-a7c8-74453ad5504d',
@@ -1649,9 +1649,6 @@ export const getCountries = (req, res) => {
     return res.status(200).json(countries);
 };
 
-export const getCategories = (req, res) => {
-    return res.status(200).json([
-        { id: 'startup', label: 'Start up' },
-        { id: 'enterprise', label: 'Enterprise' }
-    ]);
+module.exports = {
+    getCountries
 };
