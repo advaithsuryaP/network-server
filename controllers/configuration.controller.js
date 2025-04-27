@@ -24,14 +24,11 @@ const createConfiguration = async (req, res) => {
 
 const getConfigurations = async (req, res) => {
     try {
-        const { include_hidden = false, include_disabled = false, category } = req.query;
+        const { include_hidden = false, category } = req.query;
 
         const where = {};
         if (!include_hidden) {
             where.is_hidden = false;
-        }
-        if (!include_disabled) {
-            where.is_disabled = false;
         }
         if (category) {
             where.category = category;
