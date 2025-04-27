@@ -26,10 +26,6 @@ const Contact = sequelize.define(
             type: DataTypes.STRING,
             allowNull: false
         },
-        isFromUniversity: {
-            type: DataTypes.BOOLEAN,
-            defaultValue: false
-        },
         university: {
             type: DataTypes.STRING,
             allowNull: true

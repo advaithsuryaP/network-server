@@ -10,22 +10,10 @@ const Configuration = require('../models/configuration.model');
 const { CONFIGURATION_KEYS } = require('../constants/app.keys');
 
 const createContact = async (req, res) => {
-    const {
-        avatar,
-        firstName,
-        lastName,
-        title,
-        emails,
-        major,
-        phoneNumbers,
-        notes,
-        isFromUniversity,
-        school,
-        company
-    } = req.body;
+    const { avatar, firstName, lastName, title, university, emails, major, phoneNumbers, notes, company } = req.body;
 
-    if (!firstName || !lastName || !title) {
-        return res.status(400).json({ error: 'First name, last name and title are required' });
+    if (!firstName || !lastName || !title || !university) {
+        return res.status(400).json({ error: 'First name, last name, title and university are required' });
     }
 
     if (!emails || emails.length === 0) {
@@ -39,16 +27,15 @@ const createContact = async (req, res) => {
     const transaction = await sequelize.transaction();
     try {
         const contactData = {
-            avatar: avatar ?? null,
-            firstName: firstName,
-            lastName: lastName,
-            title: title,
-            major: major ?? null,
-            isFromUniversity: isFromUniversity,
-            school: school ?? null,
-            emails: emails,
-            phoneNumbers: phoneNumbers,
-            notes: notes ?? null
+            avatar,
+            firstName,
+            lastName,
+            title,
+            university,
+            major,
+            notes,
+            emails,
+            phoneNumbers
         };
 
         if (company) {
@@ -323,7 +310,14 @@ const uploadContacts = async (req, res) => {
 
         for (const [index, row] of data.entries()) {
             // Mandatory Fields Validation
-            if (!row['First Name'] || !row['Last Name'] || !row['Title'] || !row['Emails'] || !row['Phone Numbers']) {
+            if (
+                !row['First Name'] ||
+                !row['Last Name'] ||
+                !row['Title'] ||
+                !row['University'] ||
+                !row['Emails'] ||
+                !row['Phone Numbers']
+            ) {
                 throw new Error(`Missing mandatory contact fields at row ${index + 2}`);
             }
 
@@ -362,12 +356,9 @@ const uploadContacts = async (req, res) => {
                 throw new Error(`Invalid primary industry at row ${index + 2}: ${row['Company Primary Industry']}`);
             }
 
-            let universityId = null;
-            if (row['University']) {
-                universityId = getConfigId(CONFIGURATION_KEYS.UNIVERSITY, row['University']);
-                if (!universityId) {
-                    throw new Error(`Invalid university at row ${index + 2}: ${row['University']}`);
-                }
+            const universityId = getConfigId(CONFIGURATION_KEYS.UNIVERSITY, row['University']);
+            if (!universityId) {
+                throw new Error(`Invalid university at row ${index + 2}: ${row['University']}`);
             }
 
             // Create Company
@@ -377,7 +368,6 @@ const uploadContacts = async (req, res) => {
                 website: row['Company Website']?.trim() || null,
                 category: companyCategoryId,
                 primaryIndustry: primaryIndustryId,
-                secondaryIndustry: row['Company Secondary Industry']?.trim() || null,
                 attractedOutOfState: parseBoolean(row['Company Attracted Out of State']),
                 confidentialityRequested: parseBoolean(row['Company Confidentiality Requested']),
                 intellectualProperty: row['Company Intellectual Property']?.trim() || null,
@@ -398,7 +388,6 @@ const uploadContacts = async (req, res) => {
                 background: null,
                 firstName: row['First Name'].trim(),
                 lastName: row['Last Name'].trim(),
-                isFromUniversity: parseBoolean(row['From UMBC']),
                 university: universityId,
                 major: row['Major']?.trim() || null,
                 notes: row['Notes']?.trim() || null,
