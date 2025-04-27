@@ -301,7 +301,7 @@ const uploadContacts = async (req, res) => {
 
         const parseBoolean = value => value?.toString().toUpperCase() === 'TRUE';
 
-        const defaultLabelId = getConfigId(CONFIGURATION_KEYS.LABELS, 'Personal');
+        const defaultLabelId = getConfigId(CONFIGURATION_KEYS.CONTACT_LABELS, 'Personal');
         if (!defaultLabelId) {
             throw new Error('Personal label configuration not found.');
         }
@@ -361,7 +361,7 @@ const uploadContacts = async (req, res) => {
                 throw new Error(`Invalid primary industry at row ${index + 2}: ${row['Company Primary Industry']}`);
             }
 
-            const universityId = getConfigId(CONFIGURATION_KEYS.UNIVERSITY, row['University']);
+            const universityId = getConfigId(CONFIGURATION_KEYS.NETWORK_UNIVERSITY, row['University']);
             if (!universityId) {
                 throw new Error(`Invalid university at row ${index + 2}: ${row['University']}`);
             }

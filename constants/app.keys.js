@@ -1,8 +1,8 @@
 const CONFIGURATION_KEYS = {
-    LABELS: 'labels',
+    CONTACT_LABELS: 'contact_labels',
     COMPANY_CATEGORY: 'company_category',
     PRIMARY_INDUSTRY: 'primary_industry',
-    UNIVERSITY: 'university'
+    NETWORK_UNIVERSITY: 'network_university'
 };
 
 const UPLOAD_STATUS_KEYS = {
