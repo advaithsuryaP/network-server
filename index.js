@@ -1,5 +1,8 @@
-const express = require('express');
+const fs = require('fs');
 const cors = require('cors');
+const path = require('path');
+const express = require('express');
+
 const bodyParser = require('body-parser');
 const metadataRoutes = require('./routes/metadata.routes');
 const contactsRoutes = require('./routes/contact.routes');
@@ -19,6 +22,12 @@ app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
     next();
 });
+
+// Ensure uploads/ directory exists
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir);
+}
 
 app.use('/api/v1/metadata', metadataRoutes);
 app.use('/api/v1/contacts', contactsRoutes);
