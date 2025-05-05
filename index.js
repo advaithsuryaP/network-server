@@ -4,6 +4,8 @@ const path = require('path');
 const express = require('express');
 
 const bodyParser = require('body-parser');
+const authRoutes = require('./routes/auth.routes');
+const userRoutes = require('./routes/user.routes');
 const metadataRoutes = require('./routes/metadata.routes');
 const contactsRoutes = require('./routes/contact.routes');
 const companyRoutes = require('./routes/company.routes');
@@ -29,6 +31,8 @@ if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir);
 }
 
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/metadata', metadataRoutes);
 app.use('/api/v1/contacts', contactsRoutes);
 app.use('/api/v1/companies', companyRoutes);
