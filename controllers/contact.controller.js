@@ -230,52 +230,6 @@ const deleteContact = async (req, res) => {
     }
 };
 
-const searchContacts = async (req, res) => {
-    try {
-        const { query } = req.query;
-
-        // If no query, return all contacts
-        if (!query || query.trim() === '') {
-            const contacts = await Contact.findAll({
-                include: [
-                    {
-                        model: Company,
-                        as: 'company'
-                    }
-                ]
-            });
-            return res.status(200).json(contacts);
-        }
-
-        const contacts = await Contact.findAll({
-            where: {
-                [Op.or]: [
-                    {
-                        firstName: {
-                            [Op.iLike]: `%${query}%`
-                        }
-                    },
-                    {
-                        lastName: {
-                            [Op.iLike]: `%${query}%`
-                        }
-                    }
-                ]
-            },
-            include: [
-                {
-                    model: Company,
-                    as: 'company'
-                }
-            ]
-        });
-
-        return res.status(200).json(contacts);
-    } catch (error) {
-        return res.status(500).json({ error: error.message });
-    }
-};
-
 // Bulk create contacts from a CSV file
 const uploadContacts = async (req, res) => {
     if (!req.file) {
@@ -428,6 +382,5 @@ module.exports = {
     getContacts,
     getContactById,
     updateContact,
-    deleteContact,
-    searchContacts
+    deleteContact
 };
