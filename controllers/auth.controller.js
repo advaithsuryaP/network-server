@@ -30,6 +30,25 @@ const signIn = async (req, res) => {
     }
 };
 
+const signInWithToken = async (req, res) => {
+    const { accessToken } = req.body;
+
+    if (!accessToken) {
+        return res.status(400).json({ message: 'Access token is required!' });
+    }
+
+    try {
+        const decoded = jwt.verify(accessToken, process.env.JWT_SECRET);
+
+        const user = await User.findOne({ where: { id: decoded.id } });
+
+        return res.status(200).json({ message: 'Signin successful!', data: user });
+    } catch (error) {
+        return res.status(401).json({ message: 'Invalid token!' });
+    }
+};
+
 module.exports = {
-    signIn
+    signIn,
+    signInWithToken
 };
