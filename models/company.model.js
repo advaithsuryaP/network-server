@@ -41,10 +41,6 @@ const Company = sequelize.define(
             type: DataTypes.STRING,
             allowNull: true
         },
-        departmentIfFaculty: {
-            type: DataTypes.STRING,
-            allowNull: true
-        },
         preCompanyFunding: {
             type: DataTypes.DECIMAL(10, 2),
             allowNull: true
