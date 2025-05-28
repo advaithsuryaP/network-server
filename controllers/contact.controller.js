@@ -10,7 +10,20 @@ const Configuration = require('../models/configuration.model');
 const { CONFIGURATION_KEYS, UPLOAD_STATUS_KEYS } = require('../constants/app.keys');
 
 const createContact = async (req, res) => {
-    const { avatar, firstName, lastName, title, university, emails, major, phoneNumbers, notes, company } = req.body;
+    const {
+        avatar,
+        firstName,
+        lastName,
+        title,
+        university,
+        emails,
+        major,
+        phoneNumbers,
+        notes,
+        isAlumni,
+        isContestWinner,
+        company
+    } = req.body;
 
     if (!firstName || !lastName || !title || !university) {
         return res.status(400).json({ error: 'First name, last name, title and university are required' });
@@ -35,7 +48,9 @@ const createContact = async (req, res) => {
             major,
             notes,
             emails,
-            phoneNumbers
+            phoneNumbers,
+            isAlumni,
+            isContestWinner
         };
 
         if (company) {
@@ -327,12 +342,8 @@ const uploadContacts = async (req, res) => {
                 website: row['Company Website']?.trim() || null,
                 category: companyCategoryId,
                 primaryIndustry: primaryIndustryId,
-                attractedOutOfState: parseBoolean(row['Company Attracted Out of State']),
-                confidentialityRequested: parseBoolean(row['Company Confidentiality Requested']),
                 intellectualProperty: row['Company Intellectual Property']?.trim() || null,
-                fundingReceived: row['Company Funding Received'] || null,
-                icorps: parseBoolean(row['Company Icorps']),
-                tcf: parseBoolean(row['Company Tcf'])
+                fundingReceived: row['Company Funding Received'] || null
             });
 
             // Create Contact

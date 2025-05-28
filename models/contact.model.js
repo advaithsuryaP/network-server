@@ -57,6 +57,14 @@ const Contact = sequelize.define(
         phoneNumbers: {
             type: DataTypes.JSONB,
             allowNull: false
+        },
+        isAlumni: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false
+        },
+        isContestWinner: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false
         }
     },
     {

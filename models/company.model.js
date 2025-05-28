@@ -36,22 +36,6 @@ const Company = sequelize.define(
         fundingReceived: {
             type: DataTypes.DECIMAL(10, 2),
             allowNull: true
-        },
-        attractedOutOfState: {
-            type: DataTypes.BOOLEAN,
-            defaultValue: false
-        },
-        confidentialityRequested: {
-            type: DataTypes.BOOLEAN,
-            defaultValue: false
-        },
-        icorps: {
-            type: DataTypes.BOOLEAN,
-            defaultValue: false
-        },
-        tcf: {
-            type: DataTypes.BOOLEAN,
-            defaultValue: false
         }
     },
     {
