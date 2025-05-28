@@ -330,7 +330,7 @@ const uploadContacts = async (req, res) => {
                 attractedOutOfState: parseBoolean(row['Company Attracted Out of State']),
                 confidentialityRequested: parseBoolean(row['Company Confidentiality Requested']),
                 intellectualProperty: row['Company Intellectual Property']?.trim() || null,
-                preCompanyFunding: row['Company Pre Company Funding'] || null,
+                fundingReceived: row['Company Funding Received'] || null,
                 icorps: parseBoolean(row['Company Icorps']),
                 tcf: parseBoolean(row['Company Tcf'])
             });
