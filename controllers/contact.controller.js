@@ -336,8 +336,7 @@ const uploadContacts = async (req, res) => {
                 preCompanyResources: row['Company Pre Company Resources']?.trim() || null,
                 preCompanyFunding: row['Company Pre Company Funding'] || null,
                 icorps: parseBoolean(row['Company Icorps']),
-                tcf: parseBoolean(row['Company Tcf']),
-                tcfAmount: row['Company Tcf Amount'] || null
+                tcf: parseBoolean(row['Company Tcf'])
             });
 
             // Create Contact

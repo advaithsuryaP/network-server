@@ -68,10 +68,6 @@ const Company = sequelize.define(
         tcf: {
             type: DataTypes.BOOLEAN,
             defaultValue: false
-        },
-        tcfAmount: {
-            type: DataTypes.DECIMAL(10, 2),
-            allowNull: true
         }
     },
     {
