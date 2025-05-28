@@ -72,10 +72,6 @@ const Company = sequelize.define(
         tcfAmount: {
             type: DataTypes.DECIMAL(10, 2),
             allowNull: true
-        },
-        comments: {
-            type: DataTypes.TEXT,
-            allowNull: true
         }
     },
     {
