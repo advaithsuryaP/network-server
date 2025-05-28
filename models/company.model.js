@@ -45,18 +45,6 @@ const Company = sequelize.define(
             type: DataTypes.STRING,
             allowNull: true
         },
-        usmFounders: {
-            type: DataTypes.STRING,
-            allowNull: true
-        },
-        miscResources: {
-            type: DataTypes.TEXT,
-            allowNull: true
-        },
-        preCompanyResources: {
-            type: DataTypes.TEXT,
-            allowNull: true
-        },
         preCompanyFunding: {
             type: DataTypes.DECIMAL(10, 2),
             allowNull: true

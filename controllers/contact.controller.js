@@ -331,9 +331,6 @@ const uploadContacts = async (req, res) => {
                 confidentialityRequested: parseBoolean(row['Company Confidentiality Requested']),
                 intellectualProperty: row['Company Intellectual Property']?.trim() || null,
                 departmentIfFaculty: row['Company Department if Faculty']?.trim() || null,
-                usmFounders: row['Company USM Founders']?.trim() || null,
-                miscResources: row['Company Misc Resources']?.trim() || null,
-                preCompanyResources: row['Company Pre Company Resources']?.trim() || null,
                 preCompanyFunding: row['Company Pre Company Funding'] || null,
                 icorps: parseBoolean(row['Company Icorps']),
                 tcf: parseBoolean(row['Company Tcf'])
