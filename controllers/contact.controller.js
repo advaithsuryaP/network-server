@@ -385,11 +385,99 @@ const uploadContacts = async (req, res) => {
     }
 };
 
+const exportContacts = async (req, res) => {
+    try {
+        const { contactIds } = req.body;
+
+        if (!contactIds || !Array.isArray(contactIds)) {
+            return res.status(400).json({ error: 'Invalid contact IDs' });
+        }
+
+        // Fetch all configurations first
+        const configurations = await Configuration.findAll();
+
+        // Create lookup maps for configurations
+        const configMap = configurations.reduce((acc, config) => {
+            if (!acc[config.category]) {
+                acc[config.category] = {};
+            }
+            acc[config.category][config.id] = config.label;
+            return acc;
+        }, {});
+
+        // Fetch only the specified contacts
+        const contacts = await Contact.findAll({
+            where: {
+                id: {
+                    [Op.in]: contactIds
+                }
+            },
+            include: [
+                {
+                    model: Company,
+                    as: 'company'
+                }
+            ]
+        });
+
+        // Transform contacts data for Excel
+        const excelData = contacts.map(contact => ({
+            'First Name': contact.firstName,
+            'Last Name': contact.lastName,
+            Title: contact.title,
+            University: configMap[CONFIGURATION_KEYS.NETWORK_UNIVERSITY]?.[contact.university] || contact.university,
+            Major: contact.major || '',
+            Notes: contact.notes || '',
+            'Is Alumni': contact.isAlumni ? 'TRUE' : 'FALSE',
+            'Is Contest Winner': contact.isContestWinner ? 'TRUE' : 'FALSE',
+            Emails: contact.emails.map(e => e.email).join(', '),
+            'Phone Numbers': contact.phoneNumbers.map(p => p.phoneNumber).join(', '),
+            'Company Name': contact.company?.name || '',
+            'Company Category':
+                configMap[CONFIGURATION_KEYS.COMPANY_CATEGORY]?.[contact.company?.category] ||
+                contact.company?.category ||
+                '',
+            'Company Primary Industry':
+                configMap[CONFIGURATION_KEYS.PRIMARY_INDUSTRY]?.[contact.company?.primaryIndustry] ||
+                contact.company?.primaryIndustry ||
+                '',
+            'Company Description': contact.company?.description || '',
+            'Company Website': contact.company?.website || '',
+            'Company Intellectual Property': contact.company?.intellectualProperty || '',
+            'Company Funding Received': contact.company?.fundingReceived || ''
+        }));
+
+        // Create workbook and worksheet
+        const workbook = xlsx.utils.book_new();
+        const worksheet = xlsx.utils.json_to_sheet(excelData);
+
+        // Add worksheet to workbook
+        xlsx.utils.book_append_sheet(workbook, worksheet, 'Contacts');
+
+        // Generate buffer
+        const buffer = xlsx.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+        // Set headers for file download
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=contacts.xlsx');
+
+        // Send the file
+        res.send(buffer);
+    } catch (error) {
+        console.error('Error exporting contacts:', error);
+        res.status(500).json({
+            error: 'Failed to export contacts',
+            message: error.message
+        });
+    }
+};
+
 module.exports = {
     createContact,
     uploadContacts,
     getContacts,
     getContactById,
     updateContact,
-    deleteContact
+    deleteContact,
+    exportContacts
 };
