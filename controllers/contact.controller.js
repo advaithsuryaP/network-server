@@ -290,7 +290,9 @@ const uploadContacts = async (req, res) => {
                 !row['Title'] ||
                 !row['University'] ||
                 !row['Emails'] ||
-                !row['Phone Numbers']
+                !row['Phone Numbers'] ||
+                !row['Is Alumni'] ||
+                !row['Is Contest Winner']
             ) {
                 throw new Error(`Missing mandatory contact fields at row ${index + 2}`);
             }
@@ -358,7 +360,9 @@ const uploadContacts = async (req, res) => {
                 title: row['Title'].trim(),
                 companyId: newCompany.id,
                 emails: emailsArray,
-                phoneNumbers: phoneNumbersArray
+                phoneNumbers: phoneNumbersArray,
+                isAlumni: parseBoolean(row['Is Alumni']),
+                isContestWinner: parseBoolean(row['Is Contest Winner'])
             });
 
             createdContacts.push(newContact);
